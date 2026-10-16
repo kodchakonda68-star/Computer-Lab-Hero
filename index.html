@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game: Computer Lab Hero (Grade 2)</title>
+    <!-- Import Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Import Google Fonts (Inter is great for English) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-image: radial-gradient(circle at center, #dbeafe 0%, #bfdbfe 100%);
+        }
+        .btn-press { transition: all 0.1s; box-shadow: 0 6px 0 rgba(0,0,0,0.15); }
+        .btn-press:active { transform: translateY(6px); box-shadow: 0 0px 0 rgba(0,0,0,0.15); }
+        
+        /* Animations */
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop-in { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Main Game Screen -->
+    <div id="gameScreen" class="bg-white rounded-3xl shadow-xl p-8 max-w-2xl w-full text-center border-4 border-blue-400 relative overflow-hidden">
+        
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl md:text-3xl font-bold text-blue-600 drop-shadow-sm">🦸‍♂️ Computer Lab Hero</h1>
+            <div class="text-xl font-bold text-orange-600 bg-orange-100 border-2 border-orange-200 px-4 py-2 rounded-full shadow-inner">
+                Score: <span id="scoreDisplay" class="text-2xl">0</span>
+            </div>
+        </div>
+
+        <div class="mb-4 text-gray-500 font-semibold bg-gray-100 inline-block px-4 py-1 rounded-full" id="questionNumber">Question 1 / 10</div>
+        
+        <div class="bg-blue-50 border-4 border-blue-100 rounded-3xl p-8 mb-8 min-h-[180px] flex items-center justify-center shadow-inner relative">
+            <div class="absolute -top-4 -left-4 text-4xl opacity-20">❓</div>
+            <div class="absolute -bottom-4 -right-4 text-4xl opacity-20">💻</div>
+            <h2 id="questionText" class="text-2xl md:text-3xl font-bold text-gray-800 leading-relaxed z-10">
+                Loading question...
+            </h2>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-4 justify-center">
+            <button onclick="checkAnswer(true)" class="btn-press bg-green-400 hover:bg-green-500 text-white text-2xl md:text-3xl font-bold py-4 px-8 rounded-2xl w-full md:w-1/2 flex flex-col items-center border-2 border-green-500">
+                <span class="text-5xl mb-2">👍</span> Should Do
+            </button>
+            <button onclick="checkAnswer(false)" class="btn-press bg-red-400 hover:bg-red-500 text-white text-2xl md:text-3xl font-bold py-4 px-8 rounded-2xl w-full md:w-1/2 flex flex-col items-center border-2 border-red-500">
+                <span class="text-5xl mb-2">👎</span> Shouldn't Do
+            </button>
+        </div>
+    </div>
+
+    <!-- Custom Modal (Replaces Alert) -->
+    <div id="feedbackModal" class="hidden fixed inset-0 bg-slate-900 bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl animate-pop-in border-4 border-blue-400 relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-4 bg-gradient-to-r from-blue-400 to-purple-400"></div>
+            <div id="modalIcon" class="text-7xl mb-4 mt-4 drop-shadow-md">🎉</div>
+            <h3 id="modalTitle" class="text-3xl font-bold mb-4"></h3>
+            <div class="bg-gray-50 rounded-xl p-4 mb-6 border-2 border-gray-100">
+                <p id="modalMessage" class="text-lg md:text-xl text-gray-700 leading-relaxed font-semibold"></p>
+            </div>
+            <button onclick="closeModal()" class="btn-press bg-blue-500 hover:bg-blue-600 text-white text-2xl font-bold py-3 px-8 rounded-xl w-full">
+                Next ➡️
+            </button>
+        </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="resultScreen" class="hidden bg-white rounded-3xl shadow-xl p-8 max-w-lg w-full text-center border-4 border-yellow-400 relative overflow-hidden animate-pop-in">
+        <div class="absolute -top-10 -left-10 text-8xl opacity-10 text-yellow-400">⭐</div>
+        <div class="absolute -bottom-10 -right-10 text-8xl opacity-10 text-yellow-400">🏆</div>
+        
+        <h1 class="text-4xl font-bold text-blue-600 mb-2 relative z-10">Game Over!</h1>
+        <p class="text-gray-500 mb-6 font-semibold">Let's see the hero's performance!</p>
+        
+        <div id="starsDisplay" class="text-6xl mb-6 drop-shadow-md">⭐⭐⭐</div>
+        
+        <div class="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-6 mb-8 inline-block w-full shadow-inner">
+            <p class="text-xl text-gray-600 font-semibold mb-2">Your Score</p>
+            <p class="text-5xl text-gray-800 font-bold"><span id="finalScore" class="text-blue-600">0</span> <span class="text-2xl text-gray-400">/ <span id="maxScore">10</span></span></p>
+        </div>
+        
+        <button onclick="startGame()" class="btn-press bg-blue-500 hover:bg-blue-600 text-white text-2xl font-bold py-4 px-8 rounded-xl w-full relative z-10">
+            🔄 Play Again
+        </button>
+    </div>
+
+    <!-- Game System Script -->
+    <script>
+        // Translated questions covering computer lab rules and safety
+        const questions = [
+            { text: "Eating snacks and drinking water in front of the computer.", isGood: false, explain: "Water and snacks might spill on the keyboard and damage the computer." },
+            { text: "Immediately notify the teacher when the computer won't turn on.", isGood: true, explain: "Great! We shouldn't fix the computer ourselves because we might get an electric shock. Ask an adult for help." },
+            { text: "Giving your name and home address to strangers on the internet.", isGood: false, explain: "Very dangerous! We should never give personal information to people we don't know." },
+            { text: "Sharing and taking turns using the computer with friends.", isGood: true, explain: "Awesome! Sharing is a great way to follow the rules for using shared equipment." },
+            { text: "Hitting the keyboard hard while playing games.", isGood: false, explain: "Hitting it hard will cause the keys to break. You should type gently." },
+            { text: "Shutting down the computer properly after every use.", isGood: true, explain: "Good job! Shutting down properly helps preserve the computer so it lasts longer." },
+            { text: "Pulling or playing with computer cables and plugs.", isGood: false, explain: "Danger of electric shock! Never touch or pull the cables yourself." },
+            { text: "Drying your hands completely before using the computer.", isGood: true, explain: "Correct! This prevents electric shocks and keeps the equipment safe from water damage." },
+            { text: "Telling your computer password to friends.", isGood: false, explain: "Passwords are secret. We shouldn't tell others for safety reasons." },
+            { text: "Drawing on the screen with a pencil.", isGood: false, explain: "Drawing will make the screen dirty and can cause scratches and damage." }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        function startGame() {
+            currentQuestionIndex = 0;
+            score = 0;
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('scoreDisplay').innerText = score;
+            document.getElementById('questionNumber').innerText = `Question ${currentQuestionIndex + 1} / ${questions.length}`;
+            document.getElementById('questionText').innerText = questions[currentQuestionIndex].text;
+            
+            // Small reset animation for text
+            const qText = document.getElementById('questionText');
+            qText.style.animation = 'none';
+            qText.offsetHeight; /* trigger reflow */
+            qText.style.animation = 'popIn 0.3s ease-out';
+        }
+
+        function checkAnswer(userChoice) {
+            const currentQ = questions[currentQuestionIndex];
+            
+            if (userChoice === currentQ.isGood) {
+                score++;
+                document.getElementById('scoreDisplay').innerText = score;
+                showModal(true, "✅ Correct!", currentQ.explain);
+            } else {
+                showModal(false, "❌ Not quite right!", currentQ.explain);
+            }
+        }
+
+        function showModal(isCorrect, title, message) {
+            const modal = document.getElementById('feedbackModal');
+            const modalIcon = document.getElementById('modalIcon');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalMessage = document.getElementById('modalMessage');
+
+            // Setup Modal Data
+            modalIcon.innerText = isCorrect ? '🎉' : '💡';
+            modalTitle.innerText = title;
+            modalTitle.className = `text-3xl font-bold mb-4 ${isCorrect ? 'text-green-500' : 'text-red-500'}`;
+            modalMessage.innerHTML = `<strong>Reason:</strong><br/>${message}`;
+            
+            // Show Modal
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            // Hide Modal
+            document.getElementById('feedbackModal').classList.add('hidden');
+            
+            // Move to next question
+            currentQuestionIndex++;
+            
+            if (currentQuestionIndex < questions.length) {
+                updateUI();
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+            document.getElementById('finalScore').innerText = score;
+            document.getElementById('maxScore').innerText = questions.length;
+            
+            // Dynamic star calculation
+            let stars = "";
+            let message = "";
+            if (score === questions.length) {
+                stars = "⭐⭐⭐";
+            }
+            else if (score >= questions.length * 0.6) {
+                stars = "⭐⭐";
+            }
+            else if (score > 0) {
+                stars = "⭐";
+            }
+            else {
+                stars = "👍"; // Use thumbs up as encouragement
+            }
+
+            document.getElementById('starsDisplay').innerText = stars;
+        }
+
+        // Initialize the game on load
+        startGame();
+    </script>
+</body>
+</html>
